@@ -640,6 +640,18 @@ pub fn main() !void {
                     buffer.drawLabel(lang.brightness_up, length, 0);
                     length += brightness_up_len + 1;
                 }
+                draw_battery: {
+                    const battery_percentage = getBatteryPercentage() catch |err| {
+                        try log_writer.print("failed to get battery_percentage: {s}\n", .{@errorName(err)});
+                        break :draw_battery;
+                    };
+
+                    var battery_buf: [16:0]u8 = undefined;
+                    const battery_str = std.fmt.bufPrintZ(&battery_buf, "BAT {d}%", .{battery_percentage}) catch break :draw_battery;
+
+                    buffer.drawLabel(battery_str, length, 0);
+                    length += battery_str.len + 1;
+                }
             }
 
             if (config.box_title) |title| {
@@ -1118,6 +1130,19 @@ fn adjustBrightness(allocator: std.mem.Allocator, cmd: []const u8) !void {
             return error.BrightnessChangeFailed;
         }
     }
+}
+
+fn getBatteryPercentage() !u8 {
+    const battery_file = try std.fs.cwd().openFile("/sys/class/power_supply/BAT0/capacity", .{});
+    defer battery_file.close();
+    
+    var buffer: [8]u8 = undefined;
+    const bytes_read = try battery_file.read(&buffer);
+    const capacity_str = buffer[0..bytes_read];
+    
+    const trimmed = std.mem.trimRight(u8, capacity_str, "\n\r");
+    
+    return try std.fmt.parseInt(u8, trimmed, 10);
 }
 
 fn getAuthErrorMsg(err: anyerror, lang: Lang) []const u8 {
