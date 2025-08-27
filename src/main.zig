@@ -532,6 +532,18 @@ pub fn main() !void {
                 length += ly_top_str.len + 1;
             }
 
+            var battery_bar_shown = false;
+            if (config.show_battery_status) draw_battery: {
+                const battery_percentage = getBatteryPercentage() catch break :draw_battery;
+
+                var battery_buf: [32]u8 = undefined;
+                const battery_str = std.fmt.bufPrint(battery_buf[0..], "BAT: {}%", .{battery_percentage}) catch break :draw_battery;
+
+                const battery_y: usize = 1;
+                buffer.drawLabel(battery_str, 0, battery_y);
+                battery_bar_shown = true;
+            }
+
             if (config.bigclock != .none and buffer.box_height + (bigclock.HEIGHT + 2) * 2 < buffer.height) {
                 var format_buf: [16:0]u8 = undefined;
                 var clock_buf: [32:0]u8 = undefined;
@@ -639,18 +651,6 @@ pub fn main() !void {
 
                     buffer.drawLabel(lang.brightness_up, length, 0);
                     length += brightness_up_len + 1;
-                }
-                draw_battery: {
-                    const battery_percentage = getBatteryPercentage() catch |err| {
-                        try log_writer.print("failed to get battery_percentage: {s}\n", .{@errorName(err)});
-                        break :draw_battery;
-                    };
-
-                    var battery_buf: [16:0]u8 = undefined;
-                    const battery_str = std.fmt.bufPrintZ(&battery_buf, "BAT {d}%", .{battery_percentage}) catch break :draw_battery;
-
-                    buffer.drawLabel(battery_str, length, 0);
-                    length += battery_str.len + 1;
                 }
             }
 
