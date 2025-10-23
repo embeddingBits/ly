@@ -601,8 +601,6 @@ pub fn main() !void {
                 var battery_y: usize = config.edge_margin;
                 if (!config.hide_key_hints) {
                     battery_y += 1;
-                } else {
-                    battery_y = config.edge_margin;
                 }
                 buffer.drawLabel(battery_str, config.edge_margin, battery_y);
                 can_draw_battery = true;
