@@ -598,7 +598,12 @@ pub fn main() !void {
                 var battery_buf: [16:0]u8 = undefined;
                 const battery_str = std.fmt.bufPrintZ(&battery_buf, "BAT: {d}%", .{battery_percentage}) catch break :draw_battery;
 
-                const battery_y: usize = if (config.hide_key_hints) config.edge_margin else config.edge_margin + 1;
+                var battery_y: usize = config.edge_margin;
+                if (!config.hide_key_hints) {
+                    battery_y += 1;
+                } else {
+                    battery_y = config.edge_margin;
+                }
                 buffer.drawLabel(battery_str, config.edge_margin, battery_y);
                 can_draw_battery = true;
             }
